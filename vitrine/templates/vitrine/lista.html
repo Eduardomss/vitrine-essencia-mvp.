@@ -15,6 +15,7 @@
     <h2>{{ p.nome }}</h2>
     {% if p.descricao %}<p>{{ p.descricao }}</p>{% endif %}
     <p class="preco">R$ {{ p.preco|floatformat:2 }}</p>
+    <a class="botao" href="{% url 'pedido' p.pk %}">Pedir pelo WhatsApp</a>
   </li>
   {% endfor %}
 </ul>
