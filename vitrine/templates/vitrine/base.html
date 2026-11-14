@@ -10,6 +10,14 @@
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <header class="topo">
     <a class="marca" href="{% url 'vitrine' %}">{{ LOJA_NOME }}</a>
+    <nav aria-label="Área da loja">
+      {% if user.is_authenticated %}
+        <a href="{% url 'painel' %}">Painel</a>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+      {% else %}
+        <a href="{% url 'login' %}">Área da loja</a>
+      {% endif %}
+    </nav>
   </header>
   <main id="conteudo" class="pagina">
     {% if messages %}

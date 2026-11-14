@@ -1,0 +1,24 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}{{ titulo }} – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<p><a href="{% url 'painel' %}">← Voltar ao painel</a></p>
+<div class="caixa">
+  <h1>{{ titulo }}</h1>
+  {% if form.errors %}
+    <p class="erro" role="alert">⚠ Não foi possível salvar. Corrija os campos indicados abaixo.</p>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% for campo in form %}
+      <div>
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.help_text %}<p class="ajuda">{{ campo.help_text }}</p>{% endif %}
+        {% for erro in campo.errors %}<p class="erro" role="alert">⚠ {{ erro }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <p class="acoes"><button type="submit">Salvar produto</button>
+    <a class="botao secundario" href="{% url 'painel' %}">Cancelar</a></p>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}Painel – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<h1>Meus produtos</h1>
+<p><a class="botao" href="{% url 'produto_novo' %}">+ Novo produto</a></p>
+
+{% if produtos %}
+<table class="tabela">
+  <thead>
+    <tr><th scope="col">Produto</th><th scope="col">Preço</th><th scope="col">Na vitrine?</th><th scope="col">Ações</th></tr>
+  </thead>
+  <tbody>
+  {% for p in produtos %}
+    <tr>
+      <td>{{ p.nome }}</td>
+      <td>R$ {{ p.preco|floatformat:2 }}</td>
+      <td>{% if p.visivel %}<span class="selo on">✔ Visível</span>{% else %}<span class="selo off">✖ Oculto</span>{% endif %}</td>
+      <td>
+        <div class="acoes">
+          <a class="botao secundario" href="{% url 'produto_editar' p.pk %}">Editar</a>
+          <form method="post" action="{% url 'produto_alternar' p.pk %}">{% csrf_token %}
+            <button type="submit" class="secundario">{% if p.visivel %}Ocultar{% else %}Mostrar{% endif %}</button>
+          </form>
+          <form method="post" action="{% url 'produto_excluir' p.pk %}" onsubmit="return confirm('Excluir este produto de vez?');">{% csrf_token %}
+            <button type="submit" class="perigo">Excluir</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="aviso info" role="status">ℹ Você ainda não cadastrou produtos. Toque em “Novo produto”.</p>
+{% endif %}
+{% endblock %}
