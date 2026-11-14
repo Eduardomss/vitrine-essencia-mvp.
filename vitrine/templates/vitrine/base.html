@@ -1,0 +1,24 @@
+{% load static %}<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ LOJA_NOME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'vitrine/estilo.css' %}">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <a class="marca" href="{% url 'vitrine' %}">{{ LOJA_NOME }}</a>
+  </header>
+  <main id="conteudo" class="pagina">
+    {% if messages %}
+      {% for m in messages %}
+        <p class="aviso {{ m.tags }}" role="status">{% if m.tags == 'success' %}✔ {% else %}⚠ {% endif %}{{ m }}</p>
+      {% endfor %}
+    {% endif %}
+    {% block conteudo %}{% endblock %}
+  </main>
+  <footer class="rodape">Pedidos combinados diretamente pelo WhatsApp com a vendedora.</footer>
+</body>
+</html>

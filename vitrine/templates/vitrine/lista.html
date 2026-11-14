@@ -1,0 +1,24 @@
+{% extends "vitrine/base.html" %}
+{% block conteudo %}
+<h1>Nossos produtos</h1>
+<p class="intro">Produtos naturais e artesanais. Escolha o que gostou e faça o pedido pelo WhatsApp.</p>
+
+{% if produtos %}
+<ul class="grade">
+  {% for p in produtos %}
+  <li class="cartao">
+    {% if p.foto %}
+      <img src="{{ p.foto.url }}" alt="Foto de {{ p.nome }}" loading="lazy">
+    {% else %}
+      <div class="sem-foto" role="img" aria-label="Produto sem foto">Sem foto</div>
+    {% endif %}
+    <h2>{{ p.nome }}</h2>
+    {% if p.descricao %}<p>{{ p.descricao }}</p>{% endif %}
+    <p class="preco">R$ {{ p.preco|floatformat:2 }}</p>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="aviso info" role="status">ℹ Nenhum produto disponível no momento. Volte em breve!</p>
+{% endif %}
+{% endblock %}
