@@ -2,7 +2,7 @@
 
 Vitrine online simples, com pedido pelo WhatsApp, para uma pequena loja de produtos naturais e artesanais (Z&D Essência Natural, Guarulhos/SP).
 
-Projeto da disciplina de Projeto de Software (Experiência Prática), do curso de Análise e Desenvolvimento de Sistemas. Está **em desenvolvimento**.
+Projeto da disciplina de Projeto de Software (Experiência Prática), do curso de Análise e Desenvolvimento de Sistemas. O MVP já tem vitrine, pedido pelo WhatsApp, login e painel de produtos.
 
 ## Problema
 
@@ -30,7 +30,7 @@ Contribui com o **ODS 8 – Trabalho decente e crescimento econômico**, ao apoi
 
 - Python 3.12
 - Django 5.2 LTS (rotas, templates, login, formulários e testes)
-- Bootstrap 5 (interface responsiva, servido junto com a aplicação)
+- HTML e CSS próprios, responsivos e acessíveis (contraste, áreas de toque de 44 px, foco visível)
 - Pillow (validação e redução das fotos)
 - SQLite (banco embarcado)
 
@@ -59,21 +59,40 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Depois, abra http://127.0.0.1:8000/ no navegador.
+Depois, abra http://127.0.0.1:8000/ no navegador. A vitrine fica em `/` e a área da proprietária em `/entrar/`.
 
-> Os arquivos de código serão adicionados conforme o desenvolvimento avança.
+### Variáveis de ambiente (opcionais em desenvolvimento)
+
+| Variável | Para que serve |
+|----------|----------------|
+| `DJANGO_SECRET_KEY` | Chave secreta (obrigatória quando `DJANGO_DEBUG=0`) |
+| `DJANGO_DEBUG` | `1` (padrão) ou `0` em produção |
+| `DJANGO_ALLOWED_HOSTS` | Domínios permitidos, separados por vírgula |
+| `WHATSAPP_NUMERO` | Número da loja com país e DDD, só dígitos (ex.: `5511999999999`) |
+| `LOJA_NOME` | Nome exibido no site |
+
+## Testes
+
+```bash
+python manage.py test
+```
+
+Os testes cobrem a vitrine, a mensagem do WhatsApp, o login com bloqueio, o cadastro/edição de produtos e a validação de fotos.
 
 ## Segurança
 
 - Senhas guardadas apenas como hash (mecanismo nativo do Django).
 - Painel protegido por login e token CSRF.
+- Login bloqueado por 15 minutos após 5 tentativas erradas.
+- Upload de foto validado com Pillow (só imagens) e reduzido a no máximo 1000 px.
 - Chave secreta e demais segredos em variáveis de ambiente, fora do repositório.
 - Não são coletados dados pessoais dos clientes.
 
 ## Status
 
 - [x] Planejamento, requisitos e protótipo das telas
-- [ ] Estrutura do projeto Django
-- [ ] Vitrine e pedido pelo WhatsApp
-- [ ] Painel com login e cadastro de produtos
-- [ ] Testes e publicação
+- [x] Estrutura do projeto Django
+- [x] Vitrine e pedido pelo WhatsApp
+- [x] Painel com login e cadastro de produtos
+- [x] Testes automatizados
+- [ ] Publicação (PythonAnywhere)
