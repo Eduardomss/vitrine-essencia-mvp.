@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from decimal import Decimal
@@ -134,6 +135,16 @@ class PainelTests(TestCase):
         self.assertEqual(self.client.get(reverse("produto_excluir", args=[p.pk])).status_code, 405)
         self.client.post(reverse("produto_excluir", args=[p.pk]))
         self.assertEqual(Produto.objects.count(), 0)
+
+    def test_excluir_produto_apaga_o_arquivo_da_foto(self):
+        self.entrar()
+        arq = SimpleUploadedFile("pequena.png", imagem_bytes(), content_type="image/png")
+        self.client.post(reverse("produto_novo"), {"nome": "X", "preco": "10", "foto": arq})
+        p = Produto.objects.get()
+        caminho = p.foto.path
+        self.assertTrue(os.path.exists(caminho))
+        self.client.post(reverse("produto_excluir", args=[p.pk]))
+        self.assertFalse(os.path.exists(caminho))
 
     def test_arquivo_que_nao_e_imagem_e_rejeitado(self):
         self.entrar()

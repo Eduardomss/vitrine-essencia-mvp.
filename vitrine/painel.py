@@ -87,6 +87,8 @@ def produto_alternar(request, pk):
 def produto_excluir(request, pk):
     produto = get_object_or_404(Produto, pk=pk)
     nome = produto.nome
+    if produto.foto:
+        produto.foto.delete(save=False)  # libera espaço em disco (limite do plano gratuito)
     produto.delete()
     messages.success(request, f"“{nome}” foi excluído.")
     return redirect("painel")
