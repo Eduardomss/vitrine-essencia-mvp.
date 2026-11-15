@@ -4,12 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ LOJA_NOME }}{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'vitrine/favicon.png' %}">
   <link rel="stylesheet" href="{% static 'vitrine/estilo.css' %}">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <header class="topo">
-    <a class="marca" href="{% url 'vitrine' %}">{{ LOJA_NOME }}</a>
+    <a class="marca" href="{% url 'vitrine' %}">
+      <img class="logo" src="{% static 'vitrine/logo.jpg' %}" alt="Logo {{ LOJA_NOME }}" width="48" height="48">
+      <span>{{ LOJA_NOME }}</span>
+    </a>
     <nav aria-label="Área da loja">
       {% if user.is_authenticated %}
         <a href="{% url 'painel' %}">Painel</a>
