@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import UploadedFile
 from .models import Produto
 
 TAMANHO_MAX_FOTO = 5 * 1024 * 1024  # 5 MB
+LIMITE_PIXELS = 25_000_000  # evita imagens enormes que esgotam a memória ao serem reduzidas
 
 
 class ProdutoForm(forms.ModelForm):
@@ -32,4 +33,9 @@ class ProdutoForm(forms.ModelForm):
         foto = self.cleaned_data.get("foto")
         if isinstance(foto, UploadedFile) and foto.size > TAMANHO_MAX_FOTO:
             raise ValidationError("A foto é muito grande. Envie uma imagem de até 5 MB.")
+        imagem = getattr(foto, "image", None)  # objeto Pillow criado na validação do ImageField
+        if imagem is not None:
+            largura, altura = imagem.size
+            if largura * altura > LIMITE_PIXELS:
+                raise ValidationError("A imagem tem dimensões grandes demais. Reduza a foto e tente de novo.")
         return foto

@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from decimal import Decimal
@@ -136,11 +137,28 @@ class PainelTests(TestCase):
         self.client.post(reverse("produto_excluir", args=[p.pk]))
         self.assertEqual(Produto.objects.count(), 0)
 
+    def test_excluir_produto_apaga_o_arquivo_da_foto(self):
+        self.entrar()
+        arq = SimpleUploadedFile("pequena.png", imagem_bytes(), content_type="image/png")
+        self.client.post(reverse("produto_novo"), {"nome": "X", "preco": "10", "foto": arq})
+        p = Produto.objects.get()
+        caminho = p.foto.path
+        self.assertTrue(os.path.exists(caminho))
+        self.client.post(reverse("produto_excluir", args=[p.pk]))
+        self.assertFalse(os.path.exists(caminho))
+
     def test_arquivo_que_nao_e_imagem_e_rejeitado(self):
         self.entrar()
         falso = SimpleUploadedFile("foto.jpg", b"isto nao e imagem", content_type="image/jpeg")
         resp = self.client.post(reverse("produto_novo"), {"nome": "X", "preco": "10", "foto": falso})
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Produto.objects.count(), 0)
+
+    def test_foto_com_pixels_demais_e_rejeitada(self):
+        self.entrar()
+        arq = SimpleUploadedFile("enorme.png", imagem_bytes((5100, 5000)), content_type="image/png")
+        resp = self.client.post(reverse("produto_novo"), {"nome": "X", "preco": "10", "foto": arq})
+        self.assertContains(resp, "dimensões grandes demais")
         self.assertEqual(Produto.objects.count(), 0)
 
     def test_foto_grande_e_reduzida(self):
