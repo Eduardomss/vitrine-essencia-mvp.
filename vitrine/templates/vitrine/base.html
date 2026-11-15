@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ LOJA_NOME }}{% endblock %}</title>
+  <meta name="theme-color" content="#2F6B3F">
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <link rel="apple-touch-icon" href="{% static 'vitrine/icon-192.png' %}">
   <link rel="icon" type="image/png" href="{% static 'vitrine/favicon.png' %}">
   <link rel="stylesheet" href="{% static 'vitrine/estilo.css' %}">
 </head>
@@ -31,6 +34,14 @@
     {% endif %}
     {% block conteudo %}{% endblock %}
   </main>
-  <footer class="rodape">Pedidos combinados diretamente pelo WhatsApp com a vendedora.</footer>
+  <footer class="rodape">
+    Pedidos combinados diretamente pelo WhatsApp com a vendedora.<br>
+    Dica: no menu do navegador, escolha “Adicionar à tela inicial” para usar como aplicativo.
+  </footer>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function () {});
+    }
+  </script>
 </body>
 </html>

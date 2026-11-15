@@ -5,6 +5,8 @@ from . import painel, views
 
 urlpatterns = [
     path("", views.vitrine, name="vitrine"),
+    path("manifest.webmanifest", views.manifest, name="manifest"),
+    path("sw.js", views.service_worker, name="service_worker"),
     path("pedido/<int:pk>/", views.pedido, name="pedido"),
     path("entrar/", painel.LoginComBloqueio.as_view(), name="login"),
     path("sair/", LogoutView.as_view(), name="logout"),

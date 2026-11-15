@@ -22,6 +22,20 @@ def imagem_bytes(tamanho=(10, 10), formato="PNG"):
     return buf.getvalue()
 
 
+class AppInstalavelTests(TestCase):
+    def test_manifesto_tem_nome_e_icones(self):
+        resp = self.client.get(reverse("manifest"))
+        self.assertEqual(resp.status_code, 200)
+        dados = resp.json()
+        self.assertEqual(dados["display"], "standalone")
+        self.assertEqual(len(dados["icons"]), 2)
+
+    def test_service_worker_e_javascript(self):
+        resp = self.client.get(reverse("service_worker"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("javascript", resp["Content-Type"])
+
+
 class VitrineTests(TestCase):
     def setUp(self):
         self.visivel = Produto.objects.create(nome="Pomada Energética", preco=Decimal("51.00"))
