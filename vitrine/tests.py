@@ -126,7 +126,8 @@ class PainelTests(TestCase):
         self.client.post(reverse("produto_alternar", args=[p.pk]))
         p.refresh_from_db()
         self.assertFalse(p.visivel)
-        self.assertNotContains(self.client.get(reverse("vitrine")), "Pomada")
+        resp = self.client.get(reverse("vitrine"))
+        self.assertNotIn(p, resp.context["produtos"])  # o aviso de sucesso também cita o nome
 
     def test_excluir_exige_post(self):
         self.entrar()
