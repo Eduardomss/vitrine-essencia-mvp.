@@ -10,7 +10,7 @@ TAMANHO_MAX_FOTO = 5 * 1024 * 1024  # 5 MB
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ["nome", "descricao", "preco", "foto", "visivel"]
+        fields = ["nome", "categoria", "descricao", "preco", "foto", "visivel"]
         localized_fields = ["preco"]  # aceita "25,90"
         widgets = {
             "descricao": forms.Textarea(attrs={"rows": 3}),
@@ -27,6 +27,14 @@ class ProdutoForm(forms.ModelForm):
                 "invalid": "Digite o preço só com números. Exemplo: 25,90",
             },
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["categoria"].required = False
+        self.fields["categoria"].help_text = "Define em qual aba da vitrine o produto aparece."
+
+    def clean_categoria(self):
+        return self.cleaned_data.get("categoria") or "outros"
 
     def clean_foto(self):
         foto = self.cleaned_data.get("foto")

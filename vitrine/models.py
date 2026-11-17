@@ -7,6 +7,15 @@ from PIL import Image
 LIMITE_LADO_FOTO = 1000  # px; fotos maiores são reduzidas ao salvar
 
 
+CATEGORIAS = [
+    ("natal", "Natal"),
+    ("sabonetes", "Sabonetes"),
+    ("pomadas", "Pomadas"),
+    ("presentes", "Presentes"),
+    ("outros", "Outros"),
+]
+
+
 class Produto(models.Model):
     nome = models.CharField("Nome do produto", max_length=100)
     descricao = models.TextField("Descrição", max_length=500, blank=True)
@@ -16,6 +25,7 @@ class Produto(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"), message="O preço deve ser maior que zero.")],
     )
+    categoria = models.CharField("Categoria", max_length=20, choices=CATEGORIAS, default="outros")
     foto = models.ImageField("Foto", upload_to="produtos/", blank=True)
     visivel = models.BooleanField("Mostrar na vitrine", default=True)
     criado_em = models.DateTimeField(auto_now_add=True)

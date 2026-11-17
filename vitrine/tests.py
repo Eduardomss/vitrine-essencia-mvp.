@@ -83,6 +83,105 @@ class PedidoWhatsAppTests(TestCase):
         self.assertContains(resp, "Total: R$ 153,00")
 
 
+@override_settings(WHATSAPP_NUMERO="5511999999999")
+class CarrinhoTests(TestCase):
+    def setUp(self):
+        self.a = Produto.objects.create(nome="Pomada Energética", preco=Decimal("51.00"), categoria="pomadas")
+        self.b = Produto.objects.create(nome="Sabonete de Alecrim", preco=Decimal("18.00"), categoria="sabonetes")
+        self.oculto = Produto.objects.create(nome="Escondido", preco=Decimal("9.00"), visivel=False)
+
+    def alterar(self, produto, acao="inc", **extra):
+        return self.client.post(reverse("carrinho_alterar", args=[produto.pk]), {"acao": acao, **extra})
+
+    def test_adiciona_varios_produtos_e_soma_total(self):
+        self.alterar(self.a)
+        self.alterar(self.a)
+        self.alterar(self.b)
+        resp = self.client.get(reverse("carrinho"))
+        self.assertContains(resp, "Total: R$ 120,00")
+        self.assertContains(resp, "Pomada Energética")
+        self.assertContains(resp, "Sabonete de Alecrim")
+
+    def test_diminuir_ate_zero_remove_item(self):
+        self.alterar(self.a)
+        self.alterar(self.a, "dec")
+        resp = self.client.get(reverse("carrinho"))
+        self.assertContains(resp, "Seu pedido está vazio")
+
+    def test_remover_tira_o_item(self):
+        self.alterar(self.a)
+        self.alterar(self.a)
+        self.alterar(self.a, "remover")
+        self.assertContains(self.client.get(reverse("carrinho")), "Seu pedido está vazio")
+
+    def test_quantidade_maxima_99(self):
+        for _ in range(105):
+            self.alterar(self.a)
+        self.assertEqual(self.client.session["carrinho"][str(self.a.pk)], 99)
+
+    def test_produto_oculto_nao_entra_no_pedido(self):
+        resp = self.alterar(self.oculto)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_alterar_exige_post(self):
+        resp = self.client.get(reverse("carrinho_alterar", args=[self.a.pk]))
+        self.assertEqual(resp.status_code, 405)
+
+    def test_redirecionamento_externo_e_ignorado(self):
+        resp = self.alterar(self.a, next="https://site-malicioso.example/")
+        self.assertRedirects(resp, reverse("vitrine"), fetch_redirect_response=False)
+
+    def test_mensagem_lista_todos_os_itens(self):
+        self.alterar(self.a)
+        self.alterar(self.a)
+        self.alterar(self.b)
+        itens = servicos.itens_do_carrinho(self.client.session["carrinho"])
+        msg = servicos.montar_mensagem_carrinho(itens)
+        self.assertIn("2x Pomada Energética", msg)
+        self.assertIn("1x Sabonete de Alecrim", msg)
+        self.assertIn("Total: R$ 120,00", msg)
+        self.assertTrue(servicos.montar_link_carrinho(itens).startswith("https://wa.me/5511999999999?text="))
+
+    def test_contador_aparece_na_navegacao(self):
+        self.alterar(self.a)
+        self.alterar(self.b)
+        self.assertContains(self.client.get(reverse("vitrine")), "2 itens no pedido")
+
+
+class BuscaECategoriaTests(TestCase):
+    def setUp(self):
+        Produto.objects.create(nome="Pomada Energética", preco=Decimal("51.00"), categoria="pomadas")
+        Produto.objects.create(nome="Sabonete de Lavanda", preco=Decimal("18.00"), categoria="sabonetes")
+        Produto.objects.create(nome="Kit de Natal", preco=Decimal("25.00"), categoria="natal")
+
+    def test_filtra_por_categoria(self):
+        resp = self.client.get(reverse("vitrine"), {"cat": "sabonetes"})
+        self.assertContains(resp, "Sabonete de Lavanda")
+        self.assertNotContains(resp, "Pomada Energética")
+
+    def test_busca_por_nome(self):
+        resp = self.client.get(reverse("vitrine"), {"q": "natal"})
+        self.assertContains(resp, "Kit de Natal")
+        self.assertNotContains(resp, "Sabonete de Lavanda")
+
+    def test_categoria_invalida_mostra_todos(self):
+        resp = self.client.get(reverse("vitrine"), {"cat": "xyz"})
+        self.assertContains(resp, "Pomada Energética")
+        self.assertContains(resp, "Kit de Natal")
+
+    def test_busca_sem_resultado_avisa(self):
+        resp = self.client.get(reverse("vitrine"), {"q": "inexistente"})
+        self.assertContains(resp, "Nenhum produto encontrado")
+
+    def test_abas_so_mostram_categorias_com_produtos(self):
+        resp = self.client.get(reverse("vitrine"))
+        self.assertContains(resp, "Natal")
+        self.assertNotContains(resp, "Presentes")
+
+    def test_pagina_como_pedir(self):
+        self.assertContains(self.client.get(reverse("como_pedir")), "Como pedir")
+
+
 @override_settings(MEDIA_ROOT=MEDIA_TESTE)
 class PainelTests(TestCase):
     @classmethod
@@ -114,6 +213,12 @@ class PainelTests(TestCase):
         )
         self.assertRedirects(resp, reverse("painel"))
         self.assertEqual(Produto.objects.get().preco, Decimal("15.90"))
+        self.assertEqual(Produto.objects.get().categoria, "outros")
+
+    def test_cadastra_produto_com_categoria(self):
+        self.entrar()
+        self.client.post(reverse("produto_novo"), {"nome": "Kit", "categoria": "natal", "preco": "25", "visivel": "on"})
+        self.assertEqual(Produto.objects.get().categoria, "natal")
 
     def test_preco_zero_e_rejeitado(self):
         self.entrar()

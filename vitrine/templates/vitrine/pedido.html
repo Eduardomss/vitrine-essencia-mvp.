@@ -3,8 +3,16 @@
 {% block conteudo %}
 <p><a href="{% url 'vitrine' %}">← Voltar à vitrine</a></p>
 <div class="caixa">
+  {% if produto.foto %}<img class="detalhe-foto" src="{{ produto.foto.url }}" alt="Foto de {{ produto.nome }}">{% endif %}
   <h1>{{ produto.nome }}</h1>
+  {% if produto.descricao %}<p>{{ produto.descricao }}</p>{% endif %}
   <p class="preco">R$ {{ produto.preco|floatformat:2 }} cada</p>
+  <form method="post" action="{% url 'carrinho_alterar' produto.pk %}">{% csrf_token %}
+    <input type="hidden" name="acao" value="inc"><input type="hidden" name="next" value="{% url 'carrinho' %}">
+    <button type="submit" class="largo">Adicionar ao pedido</button>
+  </form>
+  <hr>
+  <p class="ajuda">Ou peça só este produto:</p>
 
   <form method="get">
     <label for="qtd">Quantidade (de 1 a 99)</label>

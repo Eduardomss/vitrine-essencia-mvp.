@@ -14,17 +14,9 @@
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <header class="topo">
     <a class="marca" href="{% url 'vitrine' %}">
-      <img class="logo" src="{% static 'vitrine/logo.jpg' %}" alt="Logo {{ LOJA_NOME }}" width="48" height="48">
-      <span>{{ LOJA_NOME }}</span>
+      <img class="logo" src="{% static 'vitrine/logo.jpg' %}" alt="Logo {{ LOJA_NOME }}" width="44" height="44">
+      <span class="marca-texto"><strong>{{ LOJA_NOME }}</strong><small>Pedido direto pelo WhatsApp</small></span>
     </a>
-    <nav aria-label="Área da loja">
-      {% if user.is_authenticated %}
-        <a href="{% url 'painel' %}">Painel</a>
-        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
-      {% else %}
-        <a href="{% url 'login' %}">Área da loja</a>
-      {% endif %}
-    </nav>
   </header>
   <main id="conteudo" class="pagina">
     {% if messages %}
@@ -35,8 +27,31 @@
     {% block conteudo %}{% endblock %}
   </main>
   <footer class="rodape">
-    Pedidos combinados diretamente pelo WhatsApp com a vendedora.
+    <p>Pedidos combinados diretamente pelo WhatsApp com a vendedora.</p>
+    <p class="area-loja">
+      {% if user.is_authenticated %}
+        <a href="{% url 'painel' %}">Painel</a>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="link">Sair</button></form>
+      {% else %}
+        <a href="{% url 'login' %}">Área da loja</a>
+      {% endif %}
+    </p>
   </footer>
+  <nav class="abas" aria-label="Menu principal">
+    <a href="{% url 'vitrine' %}"{% if request.resolver_match.url_name == 'vitrine' %} aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+      <span>Produtos</span>
+    </a>
+    <a href="{% url 'carrinho' %}"{% if request.resolver_match.url_name == 'carrinho' %} aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.5 11h11l2-8H6.5"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+      <span>Pedido</span>
+      {% if QTD_PEDIDO %}<b class="contador" aria-label="{{ QTD_PEDIDO }} itens no pedido">{{ QTD_PEDIDO }}</b>{% endif %}
+    </a>
+    <a href="{% url 'como_pedir' %}"{% if request.resolver_match.url_name == 'como_pedir' %} aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 1-13.4 7.8L3 21l1.3-4.4A9 9 0 1 1 21 12z"/></svg>
+      <span>Como pedir</span>
+    </a>
+  </nav>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("{% url 'service_worker' %}").catch(function () {});

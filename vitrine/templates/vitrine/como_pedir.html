@@ -1,0 +1,14 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}Como pedir – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<h1>Como pedir</h1>
+<ol class="como">
+  <li><span class="num">1</span><div><strong>Escolha os produtos</strong><p>Navegue pelas categorias e toque em “Adicionar ao pedido”.</p></div></li>
+  <li><span class="num">2</span><div><strong>Confira o pedido</strong><p>Na aba “Pedido” ajuste as quantidades. O total é calculado na hora.</p></div></li>
+  <li><span class="num">3</span><div><strong>Envie pelo WhatsApp</strong><p>A mensagem já vai pronta. É só enviar e combinar a entrega com a vendedora.</p></div></li>
+</ol>
+<div class="caixa">
+  <strong>{{ LOJA_NOME }}</strong>
+  <p class="ajuda">Guarulhos/SP · Atendimento direto com a vendedora. Sem cadastro e sem complicação.</p>
+</div>
+{% endblock %}

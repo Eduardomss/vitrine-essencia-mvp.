@@ -1,25 +1,56 @@
 {% extends "vitrine/base.html" %}
 {% block conteudo %}
 <h1>Nossos produtos</h1>
-<p class="intro">Produtos naturais e artesanais. Escolha o que gostou e faça o pedido pelo WhatsApp.</p>
+
+<form class="busca" method="get" role="search">
+  <label for="q" class="so-leitor">Buscar produto</label>
+  <input type="search" id="q" name="q" value="{{ busca }}" placeholder="Buscar produto" autocomplete="off">
+  {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+  <button type="submit">Buscar</button>
+</form>
+
+{% if tem_base %}
+<nav class="categorias" aria-label="Categorias">
+  {% for a in abas %}
+    <a href="?{% if a.chave %}cat={{ a.chave }}{% endif %}{% if busca %}{% if a.chave %}&amp;{% endif %}q={{ busca|urlencode }}{% endif %}"{% if a.chave == cat %} aria-current="true"{% endif %}>{{ a.nome }} <small>{{ a.n }}</small></a>
+  {% endfor %}
+</nav>
+{% endif %}
 
 {% if produtos %}
 <ul class="grade">
   {% for p in produtos %}
-  <li class="cartao">
+  <li class="cartao" id="produto-{{ p.pk }}">
+    <a class="foto" href="{% url 'pedido' p.pk %}" aria-label="Ver detalhes de {{ p.nome }}">
     {% if p.foto %}
       <img src="{{ p.foto.url }}" alt="Foto de {{ p.nome }}" loading="lazy">
     {% else %}
       <div class="sem-foto" role="img" aria-label="Produto sem foto">Sem foto</div>
     {% endif %}
-    <h2>{{ p.nome }}</h2>
-    {% if p.descricao %}<p>{{ p.descricao }}</p>{% endif %}
+    </a>
+    <h2><a href="{% url 'pedido' p.pk %}">{{ p.nome }}</a></h2>
+    {% if p.descricao %}<p class="desc">{{ p.descricao }}</p>{% endif %}
     <p class="preco">R$ {{ p.preco|floatformat:2 }}</p>
-    <a class="botao" href="{% url 'pedido' p.pk %}">Pedir pelo WhatsApp</a>
+    <div class="acao">
+    {% if p.qtd_pedido %}
+      {% include "vitrine/_passo.html" with p=p qtd=p.qtd_pedido proximo=proximo %}
+    {% else %}
+      <form method="post" action="{% url 'carrinho_alterar' p.pk %}">{% csrf_token %}
+        <input type="hidden" name="acao" value="inc"><input type="hidden" name="next" value="{{ proximo }}"><input type="hidden" name="ancora" value="1">
+        <button type="submit" class="largo">Adicionar ao pedido</button>
+      </form>
+    {% endif %}
+    </div>
   </li>
   {% endfor %}
 </ul>
+{% elif tem_base %}
+<p class="aviso info" role="status">ℹ Nenhum produto encontrado. Tente outra palavra ou outra categoria.</p>
 {% else %}
 <p class="aviso info" role="status">ℹ Nenhum produto disponível no momento. Volte em breve!</p>
+{% endif %}
+
+{% if QTD_PEDIDO %}
+<a class="barra-pedido" href="{% url 'carrinho' %}">Ver pedido ({{ QTD_PEDIDO }})</a>
 {% endif %}
 {% endblock %}

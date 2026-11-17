@@ -1,0 +1,12 @@
+{# Controle − qtd + de um produto no pedido. Espera: p, qtd, proximo #}
+<div class="passos">
+  <form method="post" action="{% url 'carrinho_alterar' p.pk %}">{% csrf_token %}
+    <input type="hidden" name="acao" value="dec"><input type="hidden" name="next" value="{{ proximo }}">
+    <button type="submit" class="passo" aria-label="Diminuir a quantidade de {{ p.nome }}">−</button>
+  </form>
+  <span class="qtd" aria-live="polite">{{ qtd }}</span>
+  <form method="post" action="{% url 'carrinho_alterar' p.pk %}">{% csrf_token %}
+    <input type="hidden" name="acao" value="inc"><input type="hidden" name="next" value="{{ proximo }}">
+    <button type="submit" class="passo cheio" aria-label="Aumentar a quantidade de {{ p.nome }}">+</button>
+  </form>
+</div>

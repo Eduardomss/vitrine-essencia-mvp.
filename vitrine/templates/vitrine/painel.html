@@ -7,12 +7,13 @@
 {% if produtos %}
 <table class="tabela">
   <thead>
-    <tr><th scope="col">Produto</th><th scope="col">Preço</th><th scope="col">Na vitrine?</th><th scope="col">Ações</th></tr>
+    <tr><th scope="col">Produto</th><th scope="col">Categoria</th><th scope="col">Preço</th><th scope="col">Na vitrine?</th><th scope="col">Ações</th></tr>
   </thead>
   <tbody>
   {% for p in produtos %}
     <tr>
       <td>{{ p.nome }}</td>
+      <td>{{ p.get_categoria_display }}</td>
       <td>R$ {{ p.preco|floatformat:2 }}</td>
       <td>{% if p.visivel %}<span class="selo on">✔ Visível</span>{% else %}<span class="selo off">✖ Oculto</span>{% endif %}</td>
       <td>

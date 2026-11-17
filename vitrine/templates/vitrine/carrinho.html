@@ -1,0 +1,37 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}Seu pedido – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<h1>Seu pedido</h1>
+{% if itens %}
+<ul class="itens">
+  {% for i in itens %}
+  <li class="item">
+    {% if i.produto.foto %}<img src="{{ i.produto.foto.url }}" alt="" width="64" height="64">{% else %}<div class="mini-sem-foto" aria-hidden="true"></div>{% endif %}
+    <div class="item-info">
+      <strong>{{ i.produto.nome }}</strong>
+      <span class="ajuda">R$ {{ i.produto.preco|floatformat:2 }} cada</span>
+      {% with p=i.produto %}
+        {% include "vitrine/_passo.html" with p=p proximo="/carrinho/" qtd=i.qtd %}
+      {% endwith %}
+    </div>
+    <div class="item-valor">
+      <strong>R$ {{ i.subtotal|floatformat:2 }}</strong>
+      <form method="post" action="{% url 'carrinho_alterar' i.produto.pk %}">{% csrf_token %}
+        <input type="hidden" name="acao" value="remover"><input type="hidden" name="next" value="/carrinho/">
+        <button type="submit" class="link" aria-label="Remover {{ i.produto.nome }} do pedido">Remover</button>
+      </form>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+<p class="total" aria-live="polite">Total: R$ {{ total }}</p>
+<a class="botao grande whats" href="{{ link_whatsapp }}" target="_blank" rel="noopener">Enviar pedido pelo WhatsApp</a>
+<p class="ajuda centro">Ao tocar no botão, o WhatsApp abre com a mensagem pronta. Basta enviar.</p>
+<p class="centro"><a href="{% url 'vitrine' %}">← Continuar escolhendo produtos</a></p>
+{% else %}
+<div class="caixa vazio">
+  <p>Seu pedido está vazio.</p>
+  <a class="botao" href="{% url 'vitrine' %}">Ver produtos</a>
+</div>
+{% endif %}
+{% endblock %}
