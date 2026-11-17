@@ -25,8 +25,10 @@
   {% endfor %}
 </ul>
 <p class="total" aria-live="polite">Total: R$ {{ total }}</p>
-<a class="botao grande whats" href="{{ link_whatsapp }}" target="_blank" rel="noopener">Enviar pedido pelo WhatsApp</a>
-<p class="ajuda centro">Ao tocar no botão, o WhatsApp abre com a mensagem pronta. Basta enviar.</p>
+<form method="post" action="{% url 'finalizar' %}">{% csrf_token %}
+  <button type="submit" class="botao grande whats">Finalizar pedido</button>
+</form>
+<p class="ajuda centro">Na próxima tela você paga por Pix e envia o pedido pelo WhatsApp.</p>
 <p class="centro"><a href="{% url 'vitrine' %}">← Continuar escolhendo produtos</a></p>
 {% else %}
 <div class="caixa vazio">

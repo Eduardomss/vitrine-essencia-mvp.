@@ -148,3 +148,11 @@ button.link { background: none; border: 0; color: var(--verde-escuro); text-deco
 .area-loja form { margin: 0; }
 .tabela { display: block; overflow-x: auto; }
 .rodape p { margin: 4px 0; }
+
+/* pedido final e pagamento */
+.status { display: inline-block; font-weight: 700; padding: 6px 12px; border-radius: 20px; background: #fff3d6; color: #6b4a00; margin: 0 0 8px; }
+.status-pago { background: var(--ok-fundo); color: var(--ok); }
+.status-cancelado { background: var(--erro-fundo); color: var(--erro); }
+.pagamento { max-width: none; margin-top: 12px; }
+.pagamento h2 { font-size: 1.1rem; margin: 0 0 8px; }
+#pix-codigo { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; padding: 8px; border: 2px solid #8c9a8f; border-radius: 10px; background: #f3f5f1; word-break: break-all; }

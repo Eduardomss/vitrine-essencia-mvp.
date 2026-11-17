@@ -69,7 +69,7 @@ def total_dos_itens(itens):
     return sum((i["subtotal"] for i in itens), Decimal("0"))
 
 
-def montar_mensagem_carrinho(itens):
+def montar_mensagem_carrinho(itens, link_pedido=None):
     linhas = ["Olá! Quero fazer um pedido:"]
     for i in itens:
         p = i["produto"]
@@ -77,9 +77,48 @@ def montar_mensagem_carrinho(itens):
             f"{i['qtd']}x {p.nome} (R$ {formatar_reais(p.preco)} cada) = R$ {formatar_reais(i['subtotal'])}"
         )
     linhas.append(f"Total: R$ {formatar_reais(total_dos_itens(itens))}")
+    if link_pedido:
+        linhas.append(f"Pedido: {link_pedido}")
     return "\n".join(linhas)
 
 
 def montar_link_carrinho(itens):
     texto = quote(montar_mensagem_carrinho(itens))
     return f"https://wa.me/{settings.WHATSAPP_NUMERO}?text={texto}"
+
+
+def criar_pedido(itens):
+    """Grava o pedido (com cópia dos itens) a partir dos itens do carrinho."""
+    from django.db import transaction
+
+    from .models import ItemPedido, Pedido
+
+    with transaction.atomic():
+        pedido = Pedido.objects.create(total=total_dos_itens(itens))
+        ItemPedido.objects.bulk_create(
+            [ItemPedido(pedido=pedido, nome=i["produto"].nome, preco=i["produto"].preco, qtd=i["qtd"]) for i in itens]
+        )
+    return pedido
+
+
+def montar_mensagem_pedido(pedido, link_pedido):
+    linhas = [f"Olá! Fiz o pedido {pedido.numero}:"]
+    for i in pedido.itens.all():
+        linhas.append(f"{i.qtd}x {i.nome} (R$ {formatar_reais(i.preco)} cada) = R$ {formatar_reais(i.subtotal)}")
+    linhas.append(f"Total: R$ {formatar_reais(pedido.total)}")
+    linhas.append(f"Detalhes e pagamento: {link_pedido}")
+    return "\n".join(linhas)
+
+
+def montar_link_pedido_whatsapp(pedido, link_pedido):
+    texto = quote(montar_mensagem_pedido(pedido, link_pedido))
+    return f"https://wa.me/{settings.WHATSAPP_NUMERO}?text={texto}"
+
+
+def pix_do_pedido(pedido):
+    """Texto do Pix copia e cola do pedido, ou None se a loja não configurou a chave."""
+    if not settings.PIX_CHAVE:
+        return None
+    from .pix import montar_pix
+
+    return montar_pix(settings.PIX_CHAVE, settings.PIX_NOME, settings.PIX_CIDADE, pedido.total, pedido.codigo)

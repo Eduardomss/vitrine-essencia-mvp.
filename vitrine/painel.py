@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .forms import ProdutoForm
-from .models import Produto
+from .models import Pedido, Produto
 
 MAX_TENTATIVAS = 5
 BLOQUEIO_SEGUNDOS = 15 * 60
@@ -90,3 +90,20 @@ def produto_excluir(request, pk):
     produto.delete()
     messages.success(request, f"“{nome}” foi excluído.")
     return redirect("painel")
+
+
+@login_required
+def pedidos(request):
+    return render(request, "vitrine/painel_pedidos.html", {"pedidos": Pedido.objects.prefetch_related("itens")[:50]})
+
+
+@login_required
+@require_POST
+def pedido_status(request, pk):
+    pedido = get_object_or_404(Pedido, pk=pk)
+    novo = request.POST.get("status")
+    if novo in (Pedido.AGUARDANDO, Pedido.PAGO, Pedido.CANCELADO):
+        pedido.status = novo
+        pedido.save(update_fields=["status"])
+        messages.success(request, f"Pedido {pedido.numero} atualizado: {pedido.get_status_display()}.")
+    return redirect("pedidos")

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.db.models import Count, Q
@@ -8,7 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from . import servicos
-from .models import CATEGORIAS, Produto
+from .models import CATEGORIAS, Pedido, Produto
 
 
 def vitrine(request):
@@ -80,6 +81,32 @@ def carrinho(request):
     return render(request, "vitrine/carrinho.html", contexto)
 
 
+@require_POST
+def finalizar(request):
+    """Transforma o carrinho em um pedido com link próprio e vai para a tela de pagamento."""
+    itens = servicos.itens_do_carrinho(request.session.get("carrinho", {}))
+    if not itens:
+        messages.error(request, "Seu pedido está vazio. Escolha ao menos um produto.")
+        return redirect("carrinho")
+    pedido = servicos.criar_pedido(itens)
+    request.session["carrinho"] = {}
+    return redirect("pedido_final", codigo=pedido.codigo)
+
+
+def pedido_final(request, codigo):
+    """Resumo do pedido: pagar por Pix e enviar o link do pedido pelo WhatsApp."""
+    pedido = get_object_or_404(Pedido, codigo=codigo)
+    link = request.build_absolute_uri(request.path)
+    contexto = {
+        "pedido": pedido,
+        "itens": pedido.itens.all(),
+        "pix": servicos.pix_do_pedido(pedido) if pedido.status == Pedido.AGUARDANDO else None,
+        "pix_chave": settings.PIX_CHAVE,
+        "link_whatsapp": servicos.montar_link_pedido_whatsapp(pedido, link),
+    }
+    return render(request, "vitrine/pedido_final.html", contexto)
+
+
 def como_pedir(request):
     return render(request, "vitrine/como_pedir.html")
 
@@ -119,7 +146,7 @@ def manifest(request):
 
 SERVICE_WORKER = """
 const CACHE = 'vitrine-v1';
-const EXCLUIDOS = ['/painel', '/entrar', '/sair', '/admin', '/carrinho'];
+const EXCLUIDOS = ['/painel', '/entrar', '/sair', '/admin', '/carrinho', '/finalizar', '/meu-pedido'];
 
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));

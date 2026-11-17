@@ -10,8 +10,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
-from . import servicos
-from .models import Produto
+from . import pix, servicos
+from .models import Pedido, Produto
 
 MEDIA_TESTE = tempfile.mkdtemp()
 
@@ -286,3 +286,114 @@ class LoginBloqueioTests(TestCase):
     def test_login_correto_funciona(self):
         resp = self.client.post(reverse("login"), {"username": "dulce", "password": "senha-forte-123"})
         self.assertRedirects(resp, reverse("painel"), fetch_redirect_response=False)
+
+
+class PixTests(TestCase):
+    def test_crc16_valor_de_referencia(self):
+        self.assertEqual(pix.crc16("123456789"), "29B1")
+
+    def test_codigo_pix_tem_valor_chave_e_crc_valido(self):
+        codigo = pix.montar_pix("dulce@email.com", "Dulce Ferreira", "Guarulhos", Decimal("120"), "ab12cd")
+        self.assertIn("br.gov.bcb.pix", codigo)
+        self.assertIn("dulce@email.com", codigo)
+        self.assertIn("5406120.00", codigo)
+        self.assertIn("DULCE FERREIRA", codigo)
+        self.assertEqual(pix.crc16(codigo[:-4]), codigo[-4:])
+
+    def test_nome_com_acento_e_limitado(self):
+        codigo = pix.montar_pix("x@y.com", "Zélia Conceição de Albuquerque Maranhão", "São José", 1, "a")
+        self.assertIn("5925ZELIA CONCEICAO DE ALBUQU", codigo)  # sem acento, em maiúsculas e com 25 caracteres
+        self.assertIn("SAO JOSE", codigo)
+
+
+@override_settings(WHATSAPP_NUMERO="5511999999999", PIX_CHAVE="dulce@email.com")
+class PedidoFinalTests(TestCase):
+    def setUp(self):
+        self.a = Produto.objects.create(nome="Pomada Energética", preco=Decimal("51.00"))
+        self.b = Produto.objects.create(nome="Sabonete de Alecrim", preco=Decimal("18.00"))
+
+    def montar_carrinho(self):
+        for produto, vezes in ((self.a, 2), (self.b, 1)):
+            for _ in range(vezes):
+                self.client.post(reverse("carrinho_alterar", args=[produto.pk]), {"acao": "inc"})
+
+    def finalizar(self):
+        self.montar_carrinho()
+        return self.client.post(reverse("finalizar"))
+
+    def test_finalizar_cria_pedido_e_limpa_carrinho(self):
+        resp = self.finalizar()
+        pedido = Pedido.objects.get()
+        self.assertRedirects(resp, reverse("pedido_final", args=[pedido.codigo]))
+        self.assertEqual(pedido.total, Decimal("120.00"))
+        self.assertEqual(pedido.itens.count(), 2)
+        self.assertEqual(self.client.session["carrinho"], {})
+
+    def test_finalizar_com_carrinho_vazio_volta_ao_carrinho(self):
+        resp = self.client.post(reverse("finalizar"))
+        self.assertRedirects(resp, reverse("carrinho"))
+        self.assertEqual(Pedido.objects.count(), 0)
+
+    def test_finalizar_exige_post(self):
+        self.assertEqual(self.client.get(reverse("finalizar")).status_code, 405)
+
+    def test_pedido_mostra_total_e_pix(self):
+        self.finalizar()
+        pedido = Pedido.objects.get()
+        resp = self.client.get(reverse("pedido_final", args=[pedido.codigo]))
+        self.assertContains(resp, "Total: R$ 120,00")
+        self.assertContains(resp, "br.gov.bcb.pix")
+        self.assertContains(resp, "Aguardando pagamento")
+
+    def test_link_do_whatsapp_leva_o_link_do_pedido(self):
+        self.finalizar()
+        pedido = Pedido.objects.get()
+        resp = self.client.get(reverse("pedido_final", args=[pedido.codigo]))
+        link = resp.context["link_whatsapp"]
+        self.assertTrue(link.startswith("https://wa.me/5511999999999?text="))
+        self.assertIn(pedido.codigo, link)
+        self.assertIn("meu-pedido", link)
+
+    @override_settings(PIX_CHAVE="")
+    def test_sem_chave_pix_combina_pelo_whatsapp(self):
+        self.finalizar()
+        resp = self.client.get(reverse("pedido_final", args=[Pedido.objects.get().codigo]))
+        self.assertNotContains(resp, "br.gov.bcb.pix")
+        self.assertContains(resp, "combinado direto com a vendedora")
+
+    def test_pedido_guarda_preco_da_epoca(self):
+        self.finalizar()
+        self.a.preco = Decimal("99.00")
+        self.a.save()
+        pedido = Pedido.objects.get()
+        self.assertEqual(pedido.itens.get(nome="Pomada Energética").preco, Decimal("51.00"))
+
+    def test_codigo_inexistente_retorna_404(self):
+        self.assertEqual(self.client.get(reverse("pedido_final", args=["naoexiste"])).status_code, 404)
+
+
+@override_settings(PIX_CHAVE="dulce@email.com")
+class PedidosPainelTests(TestCase):
+    def setUp(self):
+        get_user_model().objects.create_user("dulce", password="senha-forte-123")
+        self.pedido = Pedido.objects.create(total=Decimal("25.00"))
+        self.pedido.itens.create(nome="Kit", preco=Decimal("25.00"), qtd=1)
+
+    def test_lista_de_pedidos_exige_login(self):
+        resp = self.client.get(reverse("pedidos"))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_status_exige_login(self):
+        self.client.post(reverse("pedido_status", args=[self.pedido.pk]), {"status": "pago"})
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.status, "aguardando")
+
+    def test_marcar_como_pago_esconde_o_pix(self):
+        self.client.login(username="dulce", password="senha-forte-123")
+        self.assertContains(self.client.get(reverse("pedidos")), "Kit")
+        self.client.post(reverse("pedido_status", args=[self.pedido.pk]), {"status": "pago"})
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.status, "pago")
+        resp = self.client.get(reverse("pedido_final", args=[self.pedido.codigo]))
+        self.assertContains(resp, "Pagamento confirmado")
+        self.assertNotContains(resp, "br.gov.bcb.pix")

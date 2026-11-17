@@ -22,6 +22,10 @@ ALLOWED_HOSTS = [
 LOJA_NOME = os.environ.get("LOJA_NOME", "Z&D Essência Natural")
 # Número com código do país e DDD, só dígitos (ex.: 5511999999999)
 WHATSAPP_NUMERO = os.environ.get("WHATSAPP_NUMERO", "5511900000000")
+# Pix da loja (deixe a chave vazia para esconder o pagamento por Pix)
+PIX_CHAVE = os.environ.get("PIX_CHAVE", "")
+PIX_NOME = os.environ.get("PIX_NOME", "Dulce Ferreira")
+PIX_CIDADE = os.environ.get("PIX_CIDADE", "Guarulhos")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

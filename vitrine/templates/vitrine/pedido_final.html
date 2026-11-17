@@ -1,0 +1,56 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}Pedido {{ pedido.numero }} – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<h1>Pedido {{ pedido.numero }}</h1>
+<p class="status status-{{ pedido.status }}" role="status">
+  {% if pedido.status == "pago" %}✔{% elif pedido.status == "cancelado" %}✖{% else %}⏳{% endif %}
+  {{ pedido.get_status_display }}
+</p>
+
+<ul class="itens">
+  {% for i in itens %}
+  <li class="item"><div class="item-info"><strong>{{ i.nome }}</strong><span class="ajuda">{{ i.qtd }} x R$ {{ i.preco|floatformat:2 }}</span></div><strong>R$ {{ i.subtotal|floatformat:2 }}</strong></li>
+  {% endfor %}
+</ul>
+<p class="total">Total: R$ {{ pedido.total|floatformat:2 }}</p>
+
+{% if pedido.status == "aguardando" %}
+<section class="caixa pagamento">
+  <h2>1. Pagar</h2>
+  {% if pix %}
+    <p><strong>Pix</strong> (valor já incluso). Copie o código e cole no app do seu banco, na opção “Pix copia e cola”.</p>
+    <textarea id="pix-codigo" readonly rows="4" aria-label="Código Pix copia e cola">{{ pix }}</textarea>
+    <p><button type="button" id="copiar-pix">Copiar código Pix</button> <span id="copiado" class="ajuda" role="status"></span></p>
+    <p class="ajuda">Depois de pagar, envie o pedido pelo WhatsApp. A vendedora confirma o pagamento.</p>
+  {% else %}
+    <p>O pagamento é combinado direto com a vendedora pelo WhatsApp.</p>
+  {% endif %}
+  <p class="ajuda">Cartão de crédito: em breve.</p>
+</section>
+
+<section class="caixa pagamento">
+  <h2>2. Enviar pelo WhatsApp</h2>
+  <a class="botao grande whats" href="{{ link_whatsapp }}" target="_blank" rel="noopener">Enviar pedido pelo WhatsApp</a>
+  <p class="ajuda">A mensagem já vai pronta, com os itens, o total e o link deste pedido.</p>
+</section>
+{% elif pedido.status == "pago" %}
+<p class="aviso success" role="status">✔ Pagamento confirmado. Obrigada pela compra!</p>
+{% endif %}
+<p class="centro"><a href="{% url 'vitrine' %}">← Voltar à vitrine</a></p>
+
+<script>
+  (function () {
+    var botao = document.getElementById("copiar-pix");
+    if (!botao) return;
+    botao.addEventListener("click", function () {
+      var campo = document.getElementById("pix-codigo");
+      var aviso = document.getElementById("copiado");
+      campo.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      if (navigator.clipboard) { navigator.clipboard.writeText(campo.value).then(function () { aviso.textContent = "✔ Código copiado!"; }); }
+      else { aviso.textContent = ok ? "✔ Código copiado!" : "Selecione o código e copie."; }
+    });
+  })();
+</script>
+{% endblock %}

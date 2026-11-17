@@ -1,0 +1,30 @@
+{% extends "vitrine/base.html" %}
+{% block titulo %}Pedidos – {{ LOJA_NOME }}{% endblock %}
+{% block conteudo %}
+<p><a href="{% url 'painel' %}">← Voltar ao painel</a></p>
+<h1>Pedidos</h1>
+{% if pedidos %}
+<ul class="itens">
+  {% for p in pedidos %}
+  <li class="item pedido-linha">
+    <div class="item-info">
+      <strong>Pedido {{ p.numero }} · R$ {{ p.total|floatformat:2 }}</strong>
+      <span class="ajuda">{{ p.criado_em|date:"d/m/Y H:i" }} · {{ p.get_status_display }}</span>
+      <span class="ajuda">{% for i in p.itens.all %}{{ i.qtd }}x {{ i.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+      <div class="acoes">
+        <a class="botao secundario" href="{% url 'pedido_final' p.codigo %}">Abrir</a>
+        {% if p.status != "pago" %}
+        <form method="post" action="{% url 'pedido_status' p.pk %}">{% csrf_token %}<input type="hidden" name="status" value="pago"><button type="submit">Marcar como pago</button></form>
+        {% endif %}
+        {% if p.status == "aguardando" %}
+        <form method="post" action="{% url 'pedido_status' p.pk %}">{% csrf_token %}<input type="hidden" name="status" value="cancelado"><button type="submit" class="perigo">Cancelar</button></form>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="aviso info" role="status">ℹ Nenhum pedido ainda.</p>
+{% endif %}
+{% endblock %}
