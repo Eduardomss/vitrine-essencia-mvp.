@@ -1,8 +1,17 @@
 {% extends "vitrine/base.html" %}
 {% block conteudo %}
-<h1>Nossos produtos</h1>
+{% if not busca and not cat %}
+<section class="hero">
+  <span class="selo-hero">PRODUTOS NATURAIS · SABOARIA · POMADAS</span>
+  <h1>Cuidado natural, feito à mão com carinho.</h1>
+  <p>Escolha seus produtos, veja o preço e faça o pedido direto pelo WhatsApp, sem cadastro e sem complicação.</p>
+  <a class="botao" href="#produtos">Ver produtos</a>
+</section>
+{% endif %}
 
-<form class="busca" method="get" role="search">
+<h2 id="produtos" class="titulo-secao">Nossos produtos</h2>
+
+<form class="busca" method="get" action="#produtos" role="search">
   <label for="q" class="so-leitor">Buscar produto</label>
   <input type="search" id="q" name="q" value="{{ busca }}" placeholder="Buscar produto" autocomplete="off">
   {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
@@ -12,34 +21,38 @@
 {% if tem_base %}
 <nav class="categorias" aria-label="Categorias">
   {% for a in abas %}
-    <a href="?{% if a.chave %}cat={{ a.chave }}{% endif %}{% if busca %}{% if a.chave %}&amp;{% endif %}q={{ busca|urlencode }}{% endif %}"{% if a.chave == cat %} aria-current="true"{% endif %}>{{ a.nome }} <small>{{ a.n }}</small></a>
+    <a href="?{% if a.chave %}cat={{ a.chave }}{% endif %}{% if busca %}{% if a.chave %}&amp;{% endif %}q={{ busca|urlencode }}{% endif %}#produtos"{% if a.chave == cat %} aria-current="true"{% endif %}>{{ a.nome }} <small>{{ a.n }}</small></a>
   {% endfor %}
 </nav>
 {% endif %}
 
 {% if produtos %}
-<ul class="grade">
+<ul class="lista">
   {% for p in produtos %}
-  <li class="cartao" id="produto-{{ p.pk }}">
-    <a class="foto" href="{% url 'pedido' p.pk %}" aria-label="Ver detalhes de {{ p.nome }}">
+  <li class="linha" id="produto-{{ p.pk }}">
+    <a class="mini" href="{% url 'pedido' p.pk %}" aria-label="Ver detalhes de {{ p.nome }}">
     {% if p.foto %}
       <img src="{{ p.foto.url }}" alt="Foto de {{ p.nome }}" loading="lazy">
     {% else %}
-      <div class="sem-foto" role="img" aria-label="Produto sem foto">Sem foto</div>
+      <span class="sem-foto" role="img" aria-label="Produto sem foto">Sem foto</span>
     {% endif %}
     </a>
-    <h2><a href="{% url 'pedido' p.pk %}">{{ p.nome }}</a></h2>
-    {% if p.descricao %}<p class="desc">{{ p.descricao }}</p>{% endif %}
-    <p class="preco">R$ {{ p.preco|floatformat:2 }}</p>
-    <div class="acao">
-    {% if p.qtd_pedido %}
-      {% include "vitrine/_passo.html" with p=p qtd=p.qtd_pedido proximo=proximo %}
-    {% else %}
-      <form method="post" action="{% url 'carrinho_alterar' p.pk %}">{% csrf_token %}
-        <input type="hidden" name="acao" value="inc"><input type="hidden" name="next" value="{{ proximo }}"><input type="hidden" name="ancora" value="1">
-        <button type="submit" class="largo">Adicionar ao pedido</button>
-      </form>
-    {% endif %}
+    <div class="info">
+      <h3><a href="{% url 'pedido' p.pk %}">{{ p.nome }}</a></h3>
+      {% if p.descricao %}<p class="desc">{{ p.descricao }}</p>{% endif %}
+      <div class="preco-acao">
+        <span class="preco">R$ {{ p.preco|floatformat:2 }}</span>
+        <div class="acao">
+        {% if p.qtd_pedido %}
+          {% include "vitrine/_passo.html" with p=p qtd=p.qtd_pedido proximo=proximo %}
+        {% else %}
+          <form method="post" action="{% url 'carrinho_alterar' p.pk %}">{% csrf_token %}
+            <input type="hidden" name="acao" value="inc"><input type="hidden" name="next" value="{{ proximo }}"><input type="hidden" name="ancora" value="1">
+            <button type="submit">Adicionar</button>
+          </form>
+        {% endif %}
+        </div>
+      </div>
     </div>
   </li>
   {% endfor %}

@@ -4,18 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{{ LOJA_NOME }}{% endblock %}</title>
-  <meta name="theme-color" content="#2F6B3F">
+  <meta name="theme-color" content="#FFFFFF">
   <link rel="manifest" href="{% url 'manifest' %}">
   <link rel="apple-touch-icon" href="{% static 'vitrine/icon-192.png' %}">
   <link rel="icon" type="image/png" href="{% static 'vitrine/favicon.png' %}">
-  <link rel="stylesheet" href="{% static 'vitrine/estilo.css' %}?v=4">
+  <link rel="stylesheet" href="{% static 'vitrine/estilo.css' %}?v=5">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <header class="topo">
     <a class="marca" href="{% url 'vitrine' %}">
-      <img class="logo" src="{% static 'vitrine/logo.jpg' %}" alt="Logo {{ LOJA_NOME }}" width="44" height="44">
-      <span class="marca-texto"><strong>{{ LOJA_NOME }}</strong><small>Pedido direto pelo WhatsApp</small></span>
+      <img class="logo" src="{% static 'vitrine/logo.jpg' %}" alt="Logo {{ LOJA_NOME }}" width="40" height="40">
+      <span class="marca-texto"><strong>{{ LOJA_NOME }}</strong></span>
+    </a>
+    <a class="topo-carrinho" href="{% url 'carrinho' %}" aria-label="Ver pedido{% if QTD_PEDIDO %} ({{ QTD_PEDIDO }} itens){% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.5 11h11l2-8H6.5"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+      {% if QTD_PEDIDO %}<b class="contador">{{ QTD_PEDIDO }}</b>{% endif %}
     </a>
   </header>
   <main id="conteudo" class="pagina">
